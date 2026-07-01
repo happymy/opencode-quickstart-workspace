@@ -29,6 +29,8 @@ COPY --from=deps /app/node_modules ./node_modules
 RUN npm install -g wechat-acp@0.8.0 && npm cache clean --force
 COPY . .
 RUN mkdir -p /home/appuser/.wechat-acp && \
-    chown -R appuser:appgroup /home/appuser/.wechat-acp && \
-    chown appuser:appgroup /app
+    chown -R appuser:appgroup /home/appuser /app
 USER appuser
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:4096/health || exit 1
