@@ -390,4 +390,4 @@ npm run test:watch    # 监听模式
 | `tests/unit/utils/notification.test.js` | 单元 | `formatReply` 对 OpenAI/Claude 输出格式的处理 | 7 |
 | `tests/integration/event-format.test.js` | 集成 | `eventToNotification` 实际调用（8 种 SSE 事件 → 中文通知） | 4 |
 
-当前 **164 测试 / 0 失败 / 100% 覆盖率**（114 stmts / 101 branches / 26 funcs / 85 lines）。
+当前 **164 测试 / 0 失败 / 100% 覆盖率**（119 stmts / 107 branches / 26 funcs / 88 lines）。
