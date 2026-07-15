@@ -50,8 +50,10 @@ work/
 | 服务 | 端口 | 说明 |
 |------|------|------|
 | OpenCode Web | 4096 | 官方 Web UI，需 Basic Auth |
-| pk-opencode-webui | 2048 | 第三方 Web UI |
+| pk-opencode-webui | 2048 | 第三方 Web UI（默认禁用，见下方说明） |
 | WeChat bot | — | 微信机器人，共享会话 |
+
+> **pk-opencode-webui 默认不启动**：其目录选择对话框存在性能问题（输入无防抖 + 后端串行读目录），在目录较多时会导致明显卡顿。如需启用，编辑 `start-all.bat` 将 `ENABLE_2048` 设为 `true`，或直接运行 `start-pk-opencode-webui.bat`。
 
 ## 版本锁定
 
