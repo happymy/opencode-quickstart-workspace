@@ -1,6 +1,7 @@
 @echo off
 cd /d %~dp0
 set "SCRIPT_DIR=%CD%"
+set "ENABLE_2048=false"
 
 echo ==========================================
 echo   Starting all services...
@@ -41,6 +42,7 @@ goto wait_4096
 echo  [OK] OpenCode Web Server is ready.
 echo.
 
+if /i not "%ENABLE_2048%"=="true" goto skip_2048
 echo [2/4] Starting pk-opencode-webui (Third-party Web UI) on port 2048...
 
 REM Check for zombie port 2048
@@ -74,8 +76,13 @@ goto wait_2048
 :port_2048_ready
 echo  [OK] pk-opencode-webui is ready.
 echo.
+goto end_2048
+:skip_2048
+echo [skip] pk-opencode-webui disabled (ENABLE_2048=false).
+echo.
+:end_2048
 
-echo [3/4] Starting WeChat bridge...
+echo [next] Starting WeChat bridge...
 call npx wechat-acp@latest stop >nul 2>&1
 start "wechat-bridge" pwsh -NoLogo -Command "npx -y wechat-acp@latest --agent 'node wechat-adapter.js' --cwd '%SCRIPT_DIR%'"
 
@@ -90,7 +97,7 @@ if exist "%USERPROFILE%\.wechat-acp\token.json" (
 )
 echo.
 
-echo [4/4] Starting terminal attach...
+echo [next] Starting terminal attach...
 start "opencode-tui" pwsh -NoLogo -Command "$env:OPENCODE_SERVER_PASSWORD='opencode'; opencode attach http://localhost:4096 -c"
 echo  [OK] Terminal TUI attached.
 echo.
@@ -103,9 +110,11 @@ echo  Official Web UI:     http://localhost:4096
 echo  Username: opencode
 echo  Password: opencode
 echo.
-echo  pk-opencode-webui:   http://localhost:2048
-echo  (no auth needed - connects to 4096 as API backend)
-echo.
+if /i "%ENABLE_2048%"=="true" (
+  echo  pk-opencode-webui:   http://localhost:2048
+  echo  (no auth needed - connects to 4096 as API backend)
+  echo.
+)
 echo  Terminal TUI:        attached to same server
 echo  WeChat bot:          shares sessions with all UIs
 echo.
