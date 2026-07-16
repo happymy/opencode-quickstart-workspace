@@ -54,6 +54,8 @@ work/
 | WeChat bot | — | 微信机器人，共享会话 |
 
 > **pk-opencode-webui 默认不启动**：其目录选择对话框存在性能问题（输入无防抖 + 后端串行读目录），在目录较多时会导致明显卡顿。如需启用，编辑 `start-all.bat` 将 `ENABLE_2048` 设为 `true`，或直接运行 `start-pk-opencode-webui.bat`。
+>
+> **OPENCODE_VERSION 说明**：`pk-opencode-webui/docker/Dockerfile` 中的 `ARG OPENCODE_VERSION` 仅控制该容器内安装的 opencode CLI 版本（供用户在容器内手动运行 `opencode serve`）。与主仓库的 Docker 镜像无关，故意不跟随升级。
 
 ## 版本锁定
 
