@@ -6,25 +6,26 @@ echo   Stopping all services...
 echo ==========================================
 echo.
 
-echo [1/7] Stopping opencode processes (force kill process tree)...
+echo [1/6] Stopping opencode processes (force kill process tree)...
 taskkill /f /im opencode.exe /t >nul 2>&1
 timeout /t 1 /nobreak >nul
 taskkill /f /im opencode.exe /t >nul 2>&1
 echo  [OK] opencode processes stopped.
 
 echo  Cleaning up orphaned pwsh console windows...
-taskkill /fi "WINDOWTITLE eq opencode-web" /f >nul 2>&1
+taskkill /fi "WINDOWTITLE eq opencode-server" /f >nul 2>&1
 taskkill /fi "WINDOWTITLE eq opencode-tui" /f >nul 2>&1
+taskkill /fi "WINDOWTITLE eq openchamber-ui" /f >nul 2>&1
 echo  [OK] Console windows cleaned.
 echo.
 
-echo [2/7] Stopping bun (pk-opencode-webui)...
-taskkill /f /fi "WINDOWTITLE eq pk-opencode-webui" >nul 2>&1
-taskkill /f /im bun.exe >nul 2>&1
-echo  [OK] bun/pk-opencode-webui stopped.
+echo [2/6] Stopping OpenChamber...
+call openchamber stop >nul 2>&1
+taskkill /fi "WINDOWTITLE eq openchamber-ui" /f >nul 2>&1
+echo  [OK] OpenChamber stopped.
 echo.
 
-echo [3/7] Cleaning up orphaned MCP child processes...
+echo [3/6] Cleaning up orphaned MCP child processes...
 taskkill /f /im uvx.exe >nul 2>&1
 for /f "skip=1 tokens=*" %%p in ('wmic process where "name='node.exe'" get ProcessId 2^>nul') do (
   for /f "tokens=*" %%q in ("%%p") do if not "%%q"=="" (
@@ -36,7 +37,7 @@ taskkill /f /im docker.exe >nul 2>&1
 echo  [OK] Orphaned MCP processes cleaned.
 echo.
 
-echo [4/7] Freeing port 4096...
+echo [4/6] Freeing port 4096...
 set "PORT=4096"
 set "MAX_RETRIES=10"
 set "RETRY_COUNT=0"
@@ -66,14 +67,7 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":4096 " ^| findstr LISTENING
 :port_done
 echo.
 
-echo [5/7] Freeing port 2048...
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":2048 " ^| findstr LISTENING') do (
-  taskkill /f /t /pid %%p >nul 2>&1
-)
-echo  [OK] Port 2048 freed.
-echo.
-
-echo [6/7] Stopping WeChat bridge...
+echo [5/6] Stopping WeChat bridge...
 call npx wechat-acp@latest stop 2>nul
 timeout /t 2 /nobreak >nul
 
@@ -87,7 +81,7 @@ for /f "skip=1 tokens=*" %%p in ('wmic process where "name='node.exe'" get Proce
 echo  [OK] WeChat bridge stopped.
 echo.
 
-echo [7/7] Cleaning up stale files...
+echo [6/6] Cleaning up stale files...
 del "%USERPROFILE%\.wechat-acp\sync-buf.json" 2>nul
 if exist "%LOCALAPPDATA%\opencode\opencode.db-wal" (
   echo  Cleaning stale SQLite WAL...

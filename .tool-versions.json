@@ -20,14 +20,11 @@
     "server": "http://localhost:4096",
     "server_auth": "opencode:opencode (Basic)"
   },
+  "openchamber": {
+    "cli": "1.17.1"
+  },
   "wechat": {
     "acp": "0.8.0"
-  },
-  "repos": {
-    "pk-opencode-webui": {
-      "remote": "https://github.com/prokube/pk-opencode-webui.git",
-      "head": "50f437409da461f047fc53bee22113ef9d3839a4"
-    }
   }
 }
 
