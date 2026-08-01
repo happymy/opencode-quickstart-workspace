@@ -13,7 +13,8 @@ work/
 ├── wechat-adapter.js        # WeChat 机器人适配器（ACP Agent）
 ├── start-all.bat            # 一键启动所有服务
 ├── stop-all.bat             # 停止所有服务
-├── web.bat                  # 启动 OpenChamber Web UI（自动拉起 4096 后端）
+├── start-webui.bat            # 启动 OpenChamber Web UI（自动拉起 4096 后端）
+├── stop-webui.bat             # 停止 OpenChamber Web UI
 ├── restart-wechat.bat       # 重启微信机器人（修改 wechat-adapter.js 后使用）
 ├── wechat-bridge.bat        # 启动 wechat-acp 守护进程
 ├── setup.bat                # 环境安装与版本锁定脚本
@@ -26,7 +27,7 @@ work/
 ├── .wechat-workspace-current.json # 当前选中的工作区
 ├── .wechat-adapter.log      # 运行时日志（超 200MB 自动截断至 100MB）
 ├── Dockerfile               # Docker 镜像构建（wechat-bot）
-├── docker-compose.yml       # Docker 编排（三服务）
+├── docker-compose.yml       # Docker 编排（opencode-server + wechat-bot）
 ├── .dockerignore            # Docker 构建忽略规则
 ├── .github/workflows/       # GitHub Actions CI/CD 工作流
 ├── package.json             # Node.js 依赖
@@ -48,7 +49,7 @@ work/
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| OpenChamber | 3000 | Web UI，连接 4096 后端（Basic Auth） |
+| OpenChamber | 2048 | Web UI，连接 4096 后端（Basic Auth） |
 | OpenCode API | 4096 | 官方 headless server（仅 API，无自带 UI） |
 | WeChat bot | — | 微信机器人，共享会话 |
 
@@ -170,7 +171,7 @@ start-all.bat
 或单独启动：
 
 ```bash
-web.bat            # OpenChamber Web UI（自动拉起 4096 后端）
+start-webui.bat   # OpenChamber Web UI（自动拉起 4096 后端）
 wechat-bridge.bat  # WeChat 机器人
 ```
 
@@ -178,9 +179,9 @@ wechat-bridge.bat  # WeChat 机器人
 
 系统 Web 界面由 **OpenChamber** 提供，与 TUI/微信共享同一份会话数据：
 
-### OpenChamber（端口 3000）
+### OpenChamber（端口 2048）
 
-- 地址：http://localhost:3000
+- 地址：http://localhost:2048
 - 自动连接本机 4096 后端（`OPENCODE_PORT=4096 OPENCODE_SKIP_START=true`）
 - 功能：会话管理、AI 对话、diff 审查、**权限审批**、文件查看等
 - 安装：`npm i -g @openchamber/web`（Windows）或 `curl -fsSL https://raw.githubusercontent.com/openchamber/openchamber/main/scripts/install.sh | bash`
@@ -200,7 +201,7 @@ AI 请求文件操作或命令执行时，微信会收到通知。可以直接�
 不指定参数时默认为 `#1`（最新请求）。
 `/plist`（`/p`, `/pending`）会自动同步服务器状态，清理已过期或已处理的请求。
 
-也可以通过 Web UI 审批：http://localhost:3000 → 进入会话 → 权限弹窗。
+也可以通过 Web UI 审批：http://localhost:2048 → 进入会话 → 权限弹窗。
 
 ## 环境变量（可选）
 
@@ -273,7 +274,7 @@ iLink API 对每个 `context_token` 有约 5 次 `sendmessage` 配额，超过�
 | `/continue` | `/g` `/get` `/cont` | 续发模式：从消息队列取出下一条（显示进度 `done/total`） |
 | `/clear-continue` | `/x` `/gc` | 清除待续发内容 |
 
-> ⚠️ **FULL 模式（/f）注意配额消耗。** 每次 `flushToWeChat()` 消耗一次 iLink `sendmessage` 调用，每个 `context_token` 约 5 次上限。流式刷新上限 `FULL_QUOTA_LIMIT=4`，预留 1 次给结束 flush。超限时自动截断并发送通知，完整内容请在 OpenCode Web UI (http://localhost:4096) 查看。
+> ⚠️ **FULL 模式（/f）注意配额消耗。** 每次 `flushToWeChat()` 消耗一次 iLink `sendmessage` 调用，每个 `context_token` 约 5 次上限。流式刷新上限 `FULL_QUOTA_LIMIT=4`，预留 1 次给结束 flush。超限时自动截断并发送通知，完整内容请在 OpenChamber Web UI (http://localhost:2048) 查看。
 >
 > **超长回复策略（`/quota`）：** 影响所有模式。别名：`t`/`trunc`, `n`/`notif`, `c`/`cont`。
 > - `truncate`（默认）— 静默截断，超限部分直接丢弃

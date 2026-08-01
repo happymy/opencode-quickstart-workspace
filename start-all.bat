@@ -41,26 +41,31 @@ goto wait_4096
 echo  [OK] OpenCode Server is ready.
 echo.
 
-echo [2/4] Starting OpenChamber (Web UI) on port 3000...
+echo [2/4] Starting OpenChamber (Web UI) on port 2048...
 
-start "openchamber-ui" pwsh -NoLogo -Command "$env:OPENCODE_PORT='4096'; $env:OPENCODE_SKIP_START='true'; $env:OPENCODE_SERVER_PASSWORD='opencode'; openchamber --port 3000"
+netstat -ano | findstr ":2048 " | findstr LISTENING >nul 2>&1
+if errorlevel 1 (
+  start "openchamber-ui" pwsh -NoLogo -Command "$env:OPENCODE_PORT='4096'; $env:OPENCODE_SKIP_START='true'; $env:OPENCODE_SERVER_PASSWORD='opencode'; openchamber --port 2048"
+) else (
+  echo  [OK] OpenChamber already running, reusing.
+)
 
-echo  Waiting for port 3000...
-:wait_3000
+echo  Waiting for port 2048...
+:wait_2048
 timeout /t 2 /nobreak >nul
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":3000 " ^| findstr LISTENING') do (
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":2048 " ^| findstr LISTENING') do (
   tasklist /fi "PID eq %%p" 2>nul | findstr /c:"No tasks" >nul
   if errorlevel 1 (
-    tasklist /fi "PID eq %%p" 2>nul | findstr /i "node" >nul
-    if not errorlevel 1 goto port_3000_ready
+    tasklist /fi "PID eq %%p" 2>nul | findstr /i "node bun" >nul
+    if not errorlevel 1 goto port_2048_ready
     for /f "tokens=1" %%n in ('tasklist /fi "PID eq %%p" /nh 2^>nul') do (
-      echo  [WARN] Port 3000 is occupied by unexpected process: %%n (PID %%p)
+      echo  [WARN] Port 2048 is occupied by unexpected process: %%n (PID %%p)
       echo          To free it: taskkill /f /pid %%p
     )
   )
 )
-goto wait_3000
-:port_3000_ready
+goto wait_2048
+:port_2048_ready
 echo  [OK] OpenChamber is ready.
 echo.
 
@@ -88,7 +93,7 @@ echo ==========================================
 echo  All services started successfully!
 echo ==========================================
 echo.
-echo  OpenChamber UI:      http://localhost:3000
+echo  OpenChamber UI:      http://localhost:2048
 echo  OpenCode API:        http://localhost:4096
 echo  Username: opencode
 echo  Password: opencode

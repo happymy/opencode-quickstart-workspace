@@ -8,4 +8,4 @@ if errorlevel 1 (
 )
 
 REM Start OpenChamber Web UI
-pwsh -NoLogo -Command "$env:OPENCODE_PORT='4096'; $env:OPENCODE_SKIP_START='true'; $env:OPENCODE_SERVER_PASSWORD='opencode'; openchamber --port 3000"
+pwsh -NoLogo -Command "$env:OPENCODE_PORT='4096'; $env:OPENCODE_SKIP_START='true'; $env:OPENCODE_SERVER_PASSWORD='opencode'; openchamber --port 2048"
