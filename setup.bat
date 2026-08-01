@@ -24,6 +24,24 @@ if errorlevel 1 (
 )
 echo.
 
+:: --- 0b. Check PowerShell ExecutionPolicy (script file execution) ---
+echo [0b] Checking PowerShell ExecutionPolicy...
+for /f "tokens=*" %%v in ('pwsh -NoLogo -Command "Get-ExecutionPolicy"') do set "EXEC_POLICY=%%v"
+if /i "!EXEC_POLICY!"=="Restricted" (
+    echo.
+    echo  [WARN] PowerShell ExecutionPolicy is Restricted, .ps1 script execution is blocked.
+    echo.
+    echo  Please run the following command to allow local scripts, then run setup.bat again:
+    echo.
+    echo      Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+    echo.
+    pause
+    exit /b 1
+) else (
+    echo  [OK] ExecutionPolicy = !EXEC_POLICY!
+)
+echo.
+
 :: --- Load locked versions from .tool-versions.json ---
 echo [  ] Loading version locks...
 for /f "tokens=*" %%v in ('pwsh -NoLogo -Command "$PSVersionTable.PSVersion.ToString()"') do set "PWSH_VER=%%v"
@@ -32,25 +50,23 @@ for /f "tokens=*" %%v in ('pwsh -NoLogo -Command "$PSVersionTable.PSVersion.ToSt
   echo $c = Get-Content '.tool-versions.json' -Raw ^| ConvertFrom-Json
   echo echo ('LOCKED_NODE=' + $c.runtime.node^)
   echo echo ('LOCKED_NPM=' + $c.runtime.npm^)
-  echo echo ('LOCKED_BUN=' + $c.runtime.bun^)
   echo echo ('LOCKED_PWSH=' + $c.shell.pwsh^)
   echo echo ('LOCKED_PYTHON=' + $c.script.python^)
   echo echo ('LOCKED_GIT=' + $c.vcs.git^)
   echo echo ('LOCKED_OPENCODE_CLI=' + $c.opencode.cli^)
+  echo echo ('LOCKED_OPENCHAMBER_CLI=' + $c.openchamber.cli^)
   echo echo ('LOCKED_WECHAT_ACP=' + $c.wechat.acp^)
-  echo echo ('LOCKED_WEBUI_REMOTE=' + $c.repos.'pk-opencode-webui'.remote^)
-  echo echo ('LOCKED_WEBUI_HEAD=' + $c.repos.'pk-opencode-webui'.head^)
 )
 for /f "delims=" %%v in ('pwsh -NoLogo -File "%TEMP%\load-vers.ps1"') do set %%v
 del "%TEMP%\load-vers.ps1"
 if not "!PWSH_VER!"=="%LOCKED_PWSH%" (
-    echo  [WARN] PowerShell version !PWSH_VER! 不匹配锁定版本 %LOCKED_PWSH%
+    echo  [WARN] PowerShell version !PWSH_VER! does not match locked version %LOCKED_PWSH%
 )
 echo   [OK] Version locks loaded
 echo.
 
 :: --- 1. Node.js ---
-echo [1/7] Checking Node.js...
+echo [1/5] Checking Node.js...
 where node >nul 2>&1
 if errorlevel 1 (
     echo  ! Node.js not found, installing via winget...
@@ -70,7 +86,7 @@ if errorlevel 1 (
 echo.
 
 :: --- 2. npm deps ---
-echo [2/7] Installing workspace npm dependencies...
+echo [2/5] Installing workspace npm dependencies...
 call npm install --ignore-scripts 2>&1
 if errorlevel 1 (
     echo  [FAIL] npm install failed
@@ -79,92 +95,8 @@ if errorlevel 1 (
 )
 echo.
 
-:: --- 3. Bun ---
-echo [3/7] Checking Bun...
-where bun >nul 2>&1
-if errorlevel 1 (
-    echo  ! Bun not found, installing...
-    pwsh -NoLogo -Command "powershell -c 'iwr bun.sh/install -useb | iex'" >nul 2>&1
-    if errorlevel 1 (
-        echo  [FAIL] Bun install failed. Manual: https://bun.sh
-    ) else (
-        echo  [OK] Bun installed
-    )
-) else (
-    for /f "tokens=*" %%v in ('bun --version') do set "BUN_VER=%%v"
-    echo  [OK] Bun !BUN_VER!  (locked: %LOCKED_BUN%^)
-    if not "!BUN_VER!"=="%LOCKED_BUN%" (
-        echo  [WARN] Version mismatch, expected %LOCKED_BUN%
-    )
-)
-echo.
-
-:: --- 4. pk-opencode-webui (version locked) ---
-echo [4/7] Installing pk-opencode-webui...
-
-:check_webui
-if exist "%SCRIPT_DIR%\pk-opencode-webui\app-prefixable\package.json" (
-    pushd "%SCRIPT_DIR%\pk-opencode-webui"
-    for /f "tokens=*" %%v in ('git rev-parse HEAD') do set "WEBUI_HEAD=%%v"
-    echo  [OK] pk-opencode-webui found, HEAD !WEBUI_HEAD!
-    if not "!WEBUI_HEAD!"=="%LOCKED_WEBUI_HEAD%" (
-        echo  ! HEAD mismatch, checking out locked version...
-        git fetch origin 2>&1
-        git checkout %LOCKED_WEBUI_HEAD% 2>&1
-        if errorlevel 1 (
-            echo  [FAIL] Failed to checkout locked commit
-            pause
-            exit /b 1
-        )
-        echo  [OK] Checked out locked commit
-    )
-    popd
-    goto :webui_deps
-)
-
-echo  ! pk-opencode-webui not found, cloning from GitHub...
-where git >nul 2>&1
-if errorlevel 1 (
-    echo  [FAIL] Git not found. Install Git or manually clone:
-    echo         git clone %LOCKED_WEBUI_REMOTE% "%SCRIPT_DIR%\pk-opencode-webui"
-    pause
-    exit /b 1
-)
-git clone %LOCKED_WEBUI_REMOTE% "%SCRIPT_DIR%\pk-opencode-webui" 2>&1
-if errorlevel 1 (
-    echo  [FAIL] git clone failed. Check network or clone manually.
-    pause
-    exit /b 1
-)
-echo  [OK] pk-opencode-webui cloned
-
-:: Lock to specific commit
-pushd "%SCRIPT_DIR%\pk-opencode-webui"
-git checkout %LOCKED_WEBUI_HEAD% 2>&1
-if errorlevel 1 (
-    echo  [FAIL] Failed to checkout locked commit %LOCKED_WEBUI_HEAD%
-    pause
-    exit /b 1
-)
-echo  [OK] Locked to commit %LOCKED_WEBUI_HEAD%
-popd
-
-:webui_deps
-pushd "%SCRIPT_DIR%\pk-opencode-webui\app-prefixable"
-call bun install 2>&1
-if errorlevel 1 (
-    echo  [FAIL] bun install failed
-    popd
-    pause
-    exit /b 1
-) else (
-    echo  [OK] pk-opencode-webui dependencies installed
-)
-popd
-echo.
-
-:: --- 5. opencode CLI (version locked) ---
-echo [5/7] Checking opencode CLI...
+:: --- 3. opencode CLI (version locked) ---
+echo [3/5] Checking opencode CLI...
 where opencode >nul 2>&1
 if errorlevel 1 (
     echo  ! opencode not found, installing v%LOCKED_OPENCODE_CLI%...
@@ -179,13 +111,31 @@ if errorlevel 1 (
     if "!OPENCODE_VER!"=="%LOCKED_OPENCODE_CLI%" (
         echo  [OK] opencode !OPENCODE_VER!
     ) else (
-        echo  [WARN] opencode 版本 !OPENCODE_VER! 不匹配锁定版本 %LOCKED_OPENCODE_CLI%
+        echo  [WARN] opencode version !OPENCODE_VER! does not match locked version %LOCKED_OPENCODE_CLI%
+    )
+)
+echo.
+echo [4/5] Checking OpenChamber CLI...
+where openchamber >nul 2>&1
+if errorlevel 1 (
+    echo  ! openchamber not found, installing v%LOCKED_OPENCHAMBER_CLI%...
+    call npm install -g @openchamber/web@%LOCKED_OPENCHAMBER_CLI% 2>&1
+    if errorlevel 1 (
+        echo  [FAIL] openchamber install failed
+    ) else (
+        echo  [OK] openchamber v%LOCKED_OPENCHAMBER_CLI% installed
+    )
+) else (
+    for /f "tokens=*" %%v in ('openchamber --version 2^>nul') do set "OPENCHAMBER_VER=%%v"
+    echo  [OK] openchamber !OPENCHAMBER_VER!  (locked: %LOCKED_OPENCHAMBER_CLI%^)
+    if not "!OPENCHAMBER_VER!"=="%LOCKED_OPENCHAMBER_CLI%" (
+        echo  [WARN] openchamber version !OPENCHAMBER_VER! does not match locked version %LOCKED_OPENCHAMBER_CLI%
     )
 )
 echo.
 
-:: --- 6. wechat-acp (version locked) ---
-echo [6/7] Refreshing wechat-acp (v%LOCKED_WECHAT_ACP%)...
+:: --- 5. wechat-acp (version locked) ---
+echo [5/5] Refreshing wechat-acp (v%LOCKED_WECHAT_ACP%)...
 pwsh -NoLogo -Command "$c='$env:LOCALAPPDATA\npm-cache\_npx';if(Test-Path $c){Remove-Item -Recurse -Force \"$c\*\" -ErrorAction SilentlyContinue}"
 call npx -y wechat-acp@%LOCKED_WECHAT_ACP% --version 2>&1
 if errorlevel 1 (
@@ -201,12 +151,11 @@ echo ==========================================
 echo   Version locks from .tool-versions.json:
 echo     Node.js     %LOCKED_NODE%
 echo     npm         %LOCKED_NPM%
-echo     Bun         %LOCKED_BUN%
 echo     PowerShell  %LOCKED_PWSH%
 echo     Python      %LOCKED_PYTHON%
 echo     Git         %LOCKED_GIT%
 echo     opencode    %LOCKED_OPENCODE_CLI%
+echo     openchamber %LOCKED_OPENCHAMBER_CLI%
 echo     wechat-acp  %LOCKED_WECHAT_ACP%
-echo     pk-opencode-webui %LOCKED_WEBUI_HEAD:~0,8%...
 echo ==========================================
 pause

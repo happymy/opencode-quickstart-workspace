@@ -8,13 +8,13 @@ OpenCode + wechat-acp + WeChat 机器人集成工作区。
 
 ```
 work/
-├── pk-opencode-webui/       # 第三方 OpenCode Web UI（独立 git 仓库，版本锁定）
 ├── src/
 │   └── utils.js             # 纯函数工具库（测试入口）
 ├── wechat-adapter.js        # WeChat 机器人适配器（ACP Agent）
 ├── start-all.bat            # 一键启动所有服务
 ├── stop-all.bat             # 停止所有服务
-├── web.bat                  # 启动 OpenCode Web UI
+├── start-webui.bat            # 启动 OpenChamber Web UI（自动拉起 4096 后端）
+├── stop-webui.bat             # 停止 OpenChamber Web UI
 ├── restart-wechat.bat       # 重启微信机器人（修改 wechat-adapter.js 后使用）
 ├── wechat-bridge.bat        # 启动 wechat-acp 守护进程
 ├── setup.bat                # 环境安装与版本锁定脚本
@@ -27,7 +27,7 @@ work/
 ├── .wechat-workspace-current.json # 当前选中的工作区
 ├── .wechat-adapter.log      # 运行时日志（超 200MB 自动截断至 100MB）
 ├── Dockerfile               # Docker 镜像构建（wechat-bot）
-├── docker-compose.yml       # Docker 编排（三服务）
+├── docker-compose.yml       # Docker 编排（opencode-server + wechat-bot）
 ├── .dockerignore            # Docker 构建忽略规则
 ├── .github/workflows/       # GitHub Actions CI/CD 工作流
 ├── package.json             # Node.js 依赖
@@ -49,13 +49,11 @@ work/
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| OpenCode Web | 4096 | 官方 Web UI，需 Basic Auth |
-| pk-opencode-webui | 2048 | 第三方 Web UI（默认禁用，见下方说明） |
+| OpenChamber | 2048 | Web UI，连接 4096 后端（Basic Auth） |
+| OpenCode API | 4096 | 官方 headless server（仅 API，无自带 UI） |
 | WeChat bot | — | 微信机器人，共享会话 |
 
-> **pk-opencode-webui 默认不启动**：其目录选择对话框存在性能问题（输入无防抖 + 后端串行读目录），在目录较多时会导致明显卡顿。如需启用，编辑 `start-all.bat` 将 `ENABLE_2048` 设为 `true`，或直接运行 `start-pk-opencode-webui.bat`。
->
-> **OPENCODE_VERSION 说明**：`pk-opencode-webui/docker/Dockerfile` 中的 `ARG OPENCODE_VERSION` 仅控制该容器内安装的 opencode CLI 版本（供用户在容器内手动运行 `opencode serve`）。与主仓库的 Docker 镜像无关，故意不跟随升级。
+> **OpenChamber**：功能更全、更稳定的第三方开源 Web UI，替代 opencode 官方自带 UI 与旧第三方 pk-opencode-webui。默认连接本机 4096 后端，免去 `opencode web` 内置界面。通过 `npm i -g @openchamber/web` 安装（版本锁定见 `.tool-versions.json`）。
 
 ## 版本锁定
 
@@ -63,13 +61,13 @@ work/
 
 | 类别 | 锁定项 | 说明 |
 |------|--------|------|
-| 运行时 | Node.js、npm、Bun | 安装后比对版本，不匹配输出 `[WARN]` |
+| 运行时 | Node.js、npm | 安装后比对版本，不匹配输出 `[WARN]` |
 | Shell | PowerShell 7+ | 同上 |
 | 语言 | Python | 同上 |
 | VCS | Git | 同上 |
 | npm 包 | opencode CLI | 未安装时装锁定版本，已安装版本不匹配则 warn |
+| npm 包 | OpenChamber CLI | 同上（`@openchamber/web`） |
 | npx 包 | wechat-acp | 始终下载锁定版本（`npx wechat-acp@<版本>`） |
-| Git 仓库 | pk-opencode-webui | 克隆后 checkout 锁定 commit，已存在时校验 HEAD |
 
 ## 环境安装
 
@@ -79,7 +77,7 @@ work/
 setup.bat
 ```
 
-脚本自动读取 `.tool-versions.json` 中的版本锁，检查/安装：Node.js、Bun、opencode CLI（锁定版本）、npm 依赖，自动 clone 并锁定 pk-opencode-webui 至指定 commit，刷新 wechat-acp（锁定版本）。
+脚本自动读取 `.tool-versions.json` 中的版本锁，检查/安装：Node.js、opencode CLI（锁定版本）、OpenChamber CLI（锁定版本）、npm 依赖，刷新 wechat-acp（锁定版本）。
 
 ## Docker 部署
 
@@ -96,9 +94,10 @@ docker compose logs -f            # 查看实时日志
 
 | 服务 | 镜像 | 大小 | 端口 | 说明 |
 |------|------|------|------|------|
-| `opencode-server` | `ghcr.io/anomalyco/opencode`（官方） | 247 MB | 4096 | OpenCode Web 服务器 |
+| `opencode-server` | `ghcr.io/anomalyco/opencode`（官方） | 247 MB | 4096 | OpenCode headless server（API） |
 | `wechat-bot` | 本地构建 | 487 MB | — | wechat-acp + wechat-adapter.js |
-| `webui` | 本地构建 | 429 MB | 2048 | 第三方 OpenCode Web UI |
+
+> OpenChamber Web UI 在容器外本地运行（`npm i -g @openchamber/web`），连接容器暴露的 4096 端口即可。
 
 ### 数据持久化
 
@@ -117,7 +116,7 @@ docker compose logs -f            # 查看实时日志
 
 打 `v*` tag 推送后，GitHub Actions 自动执行：
 
-1. 构建 `wechat-bot` 和 `webui` 镜像并推送到 `ghcr.io`
+1. 构建 `wechat-bot` 镜像并推送到 `ghcr.io`
 2. 导出 `.tar.gz` 离线包
 3. 创建 Release 并上传附件
 
@@ -134,7 +133,6 @@ git push origin v1.2.4
 
 ```bash
 docker pull ghcr.io/happymy/opencode-quickstart-workspace/wechat-bot:v1.2.4
-docker pull ghcr.io/happymy/opencode-quickstart-workspace/webui:v1.2.4
 ```
 
 ### 首次扫码登录
@@ -173,25 +171,22 @@ start-all.bat
 或单独启动：
 
 ```bash
-web.bat            # OpenCode Web UI + pk-opencode-webui
+start-webui.bat   # OpenChamber Web UI（自动拉起 4096 后端）
 wechat-bridge.bat  # WeChat 机器人
 ```
 
 ## Web UI
 
-系统包含两个 Web 界面，共享同一份会话数据：
+系统 Web 界面由 **OpenChamber** 提供，与 TUI/微信共享同一份会话数据。相比 opencode 官方自带 UI 与旧第三方 pk-opencode-webui，OpenChamber 功能更全（会话管理、AI 对话、diff 审查、权限审批、文件浏览、模型切换等）、bug 更少、更稳定。
 
-### 官方 Web UI（端口 4096）
-
-- 地址：http://localhost:4096
-- 登录：用户名 `opencode`，密码 `opencode`
-- 功能：会话管理、AI 对话、**权限审批**、文件查看等
-
-### 第三方 Web UI（端口 2048）
+### OpenChamber（端口 2048）
 
 - 地址：http://localhost:2048
-- 免登录，自动连接 4096 后端
-- 提供不同的界面风格
+- 自动连接本机 4096 后端（`OPENCODE_PORT=4096 OPENCODE_SKIP_START=true`）
+- 功能：会话管理、AI 对话、diff 审查、**权限审批**、文件查看等
+- 安装：`npm i -g @openchamber/web`（Windows）或 `curl -fsSL https://raw.githubusercontent.com/openchamber/openchamber/main/scripts/install.sh | bash`
+
+> 原 opencode 自带 Web UI（`opencode web`）与第三方 pk-opencode-webui 已弃用。4096 端口现仅提供 headless API（`opencode serve`）。
 
 ### 权限审批
 
@@ -206,7 +201,7 @@ AI 请求文件操作或命令执行时，微信会收到通知。可以直接�
 不指定参数时默认为 `#1`（最新请求）。
 `/plist`（`/p`, `/pending`）会自动同步服务器状态，清理已过期或已处理的请求。
 
-也可以通过 Web UI 审批：http://localhost:4096 → 进入会话 → 权限弹窗。
+也可以通过 Web UI 审批：http://localhost:2048 → 进入会话 → 权限弹窗。
 
 ## 环境变量（可选）
 
@@ -279,7 +274,7 @@ iLink API 对每个 `context_token` 有约 5 次 `sendmessage` 配额，超过�
 | `/continue` | `/g` `/get` `/cont` | 续发模式：从消息队列取出下一条（显示进度 `done/total`） |
 | `/clear-continue` | `/x` `/gc` | 清除待续发内容 |
 
-> ⚠️ **FULL 模式（/f）注意配额消耗。** 每次 `flushToWeChat()` 消耗一次 iLink `sendmessage` 调用，每个 `context_token` 约 5 次上限。流式刷新上限 `FULL_QUOTA_LIMIT=4`，预留 1 次给结束 flush。超限时自动截断并发送通知，完整内容请在 OpenCode Web UI (http://localhost:4096) 查看。
+> ⚠️ **FULL 模式（/f）注意配额消耗。** 每次 `flushToWeChat()` 消耗一次 iLink `sendmessage` 调用，每个 `context_token` 约 5 次上限。流式刷新上限 `FULL_QUOTA_LIMIT=4`，预留 1 次给结束 flush。超限时自动截断并发送通知，完整内容请在 OpenChamber Web UI (http://localhost:2048) 查看。
 >
 > **超长回复策略（`/quota`）：** 影响所有模式。别名：`t`/`trunc`, `n`/`notif`, `c`/`cont`。
 > - `truncate`（默认）— 静默截断，超限部分直接丢弃
