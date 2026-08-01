@@ -24,6 +24,24 @@ if errorlevel 1 (
 )
 echo.
 
+:: --- 0b. Check PowerShell ExecutionPolicy (script file execution) ---
+echo [0b] Checking PowerShell ExecutionPolicy...
+for /f "tokens=*" %%v in ('pwsh -NoLogo -Command "Get-ExecutionPolicy"') do set "EXEC_POLICY=%%v"
+if /i "!EXEC_POLICY!"=="Restricted" (
+    echo.
+    echo  [WARN] PowerShell ExecutionPolicy is Restricted, .ps1 script execution is blocked.
+    echo.
+    echo  Please run the following command to allow local scripts, then run setup.bat again:
+    echo.
+    echo      Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+    echo.
+    pause
+    exit /b 1
+) else (
+    echo  [OK] ExecutionPolicy = !EXEC_POLICY!
+)
+echo.
+
 :: --- Load locked versions from .tool-versions.json ---
 echo [  ] Loading version locks...
 for /f "tokens=*" %%v in ('pwsh -NoLogo -Command "$PSVersionTable.PSVersion.ToString()"') do set "PWSH_VER=%%v"
@@ -109,9 +127,9 @@ if errorlevel 1 (
     )
 ) else (
     for /f "tokens=*" %%v in ('openchamber --version 2^>nul') do set "OPENCHAMBER_VER=%%v"
-    echo  [OK] openchamber !OPENCHAMBER_VER!  (locked: v%LOCKED_OPENCHAMBER_CLI%^)
-    if not "!OPENCHAMBER_VER!"=="v%LOCKED_OPENCHAMBER_CLI%" (
-        echo  [WARN] openchamber version !OPENCHAMBER_VER! does not match locked version v%LOCKED_OPENCHAMBER_CLI%
+    echo  [OK] openchamber !OPENCHAMBER_VER!  (locked: %LOCKED_OPENCHAMBER_CLI%^)
+    if not "!OPENCHAMBER_VER!"=="%LOCKED_OPENCHAMBER_CLI%" (
+        echo  [WARN] openchamber version !OPENCHAMBER_VER! does not match locked version %LOCKED_OPENCHAMBER_CLI%
     )
 )
 echo.
