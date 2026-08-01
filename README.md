@@ -53,7 +53,7 @@ work/
 | OpenCode API | 4096 | 官方 headless server（仅 API，无自带 UI） |
 | WeChat bot | — | 微信机器人，共享会话 |
 
-> **OpenChamber**：替代 opencode 官方自带 Web UI 与旧第三方 UI（pk-opencode-webui）。默认连接本机 4096 后端，免去 `opencode web` 内置界面。通过 `npm i -g @openchamber/web` 安装（版本锁定见 `.tool-versions.json`）。
+> **OpenChamber**：功能更全、更稳定的第三方开源 Web UI，替代 opencode 官方自带 UI 与旧第三方 pk-opencode-webui。默认连接本机 4096 后端，免去 `opencode web` 内置界面。通过 `npm i -g @openchamber/web` 安装（版本锁定见 `.tool-versions.json`）。
 
 ## 版本锁定
 
@@ -177,7 +177,7 @@ wechat-bridge.bat  # WeChat 机器人
 
 ## Web UI
 
-系统 Web 界面由 **OpenChamber** 提供，与 TUI/微信共享同一份会话数据：
+系统 Web 界面由 **OpenChamber** 提供，与 TUI/微信共享同一份会话数据。相比 opencode 官方自带 UI 与旧第三方 pk-opencode-webui，OpenChamber 功能更全（会话管理、AI 对话、diff 审查、权限审批、文件浏览、模型切换等）、bug 更少、更稳定。
 
 ### OpenChamber（端口 2048）
 
