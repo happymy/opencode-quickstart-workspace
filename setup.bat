@@ -42,7 +42,7 @@ for /f "tokens=*" %%v in ('pwsh -NoLogo -Command "$PSVersionTable.PSVersion.ToSt
 for /f "delims=" %%v in ('pwsh -NoLogo -File "%TEMP%\load-vers.ps1"') do set %%v
 del "%TEMP%\load-vers.ps1"
 if not "!PWSH_VER!"=="%LOCKED_PWSH%" (
-    echo  [WARN] PowerShell version !PWSH_VER! 不匹配锁定版本 %LOCKED_PWSH%
+    echo  [WARN] PowerShell version !PWSH_VER! does not match locked version %LOCKED_PWSH%
 )
 echo   [OK] Version locks loaded
 echo.
@@ -93,7 +93,7 @@ if errorlevel 1 (
     if "!OPENCODE_VER!"=="%LOCKED_OPENCODE_CLI%" (
         echo  [OK] opencode !OPENCODE_VER!
     ) else (
-        echo  [WARN] opencode 版本 !OPENCODE_VER! 不匹配锁定版本 %LOCKED_OPENCODE_CLI%
+        echo  [WARN] opencode version !OPENCODE_VER! does not match locked version %LOCKED_OPENCODE_CLI%
     )
 )
 echo.
@@ -111,7 +111,7 @@ if errorlevel 1 (
     for /f "tokens=*" %%v in ('openchamber --version 2^>nul') do set "OPENCHAMBER_VER=%%v"
     echo  [OK] openchamber !OPENCHAMBER_VER!  (locked: v%LOCKED_OPENCHAMBER_CLI%^)
     if not "!OPENCHAMBER_VER!"=="v%LOCKED_OPENCHAMBER_CLI%" (
-        echo  [WARN] openchamber 版本 !OPENCHAMBER_VER! 不匹配锁定版本 v%LOCKED_OPENCHAMBER_CLI%
+        echo  [WARN] openchamber version !OPENCHAMBER_VER! does not match locked version v%LOCKED_OPENCHAMBER_CLI%
     )
 )
 echo.
