@@ -79,6 +79,8 @@ setup.bat
 
 脚本自动读取 `.tool-versions.json` 中的版本锁，检查/安装：Node.js、opencode CLI（锁定版本）、OpenChamber CLI（锁定版本）、npm 依赖，刷新 wechat-acp（锁定版本）。
 
+> **PowerShell 执行策略**：Windows 默认 `Restricted` 会禁止运行 `.ps1` 脚本，导致版本锁加载失败。setup.bat 会先检测执行策略，受限时提示执行 `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` 解除后重新运行（仅对当前用户生效，无需管理员）。
+
 ## Docker 部署
 
 替代本地环境安装，使用 Docker 容器化运行（推荐用于生产环境）：
