@@ -1,6 +1,11 @@
 @echo off
 cd /d %~dp0
 
+REM ========== Configurable variables (edit as needed) ==========
+set "OPENCODE_PORT=4096"
+set "OPENCHAMBER_PORT=2048"
+REM =============================================
+
 echo ==========================================
 echo   Stopping all services...
 echo ==========================================
@@ -37,32 +42,32 @@ taskkill /f /im docker.exe >nul 2>&1
 echo  [OK] Orphaned MCP processes cleaned.
 echo.
 
-echo [4/6] Freeing port 4096...
-set "PORT=4096"
+echo [4/6] Freeing port %OPENCODE_PORT%...
+set "PORT=%OPENCODE_PORT%"
 set "MAX_RETRIES=10"
 set "RETRY_COUNT=0"
 
 :retry_port
 set /a RETRY_COUNT+=1
 if %RETRY_COUNT% gtr %MAX_RETRIES% (
-  echo  [WARN] Port 4096 still occupied after %MAX_RETRIES% attempts.
+  echo  [WARN] Port %OPENCODE_PORT% still occupied after %MAX_RETRIES% attempts.
   goto :port_force
 )
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":4096 " ^| findstr LISTENING') do (
-  echo  PID %%p is listening on port 4096, force killing...
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%OPENCODE_PORT% " ^| findstr LISTENING') do (
+  echo  PID %%p is listening on port %OPENCODE_PORT%, force killing...
   taskkill /f /t /pid %%p >nul 2>&1
   timeout /t 2 /nobreak >nul
   goto retry_port
 )
-echo  [OK] Port 4096 is free.
+echo  [OK] Port %OPENCODE_PORT% is free.
 goto :port_done
 
 :port_force
 echo  Trying to kill any process via image name...
 taskkill /f /im opencode.exe /t >nul 2>&1
 timeout /t 2 /nobreak >nul
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":4096 " ^| findstr LISTENING') do (
-  echo  [WARN] Port 4096 STILL held by PID %%p. This may require admin rights.
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%OPENCODE_PORT% " ^| findstr LISTENING') do (
+  echo  [WARN] Port %OPENCODE_PORT% STILL held by PID %%p. This may require admin rights.
 )
 :port_done
 echo.
