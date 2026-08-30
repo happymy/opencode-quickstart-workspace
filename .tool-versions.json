@@ -20,7 +20,7 @@
     "server_auth": "opencode:opencode (Basic)"
   },
   "openchamber": {
-    "cli": "1.21.0"
+    "cli": "1.21.1"
   },
   "wechat": {
     "acp": "0.8.0"
