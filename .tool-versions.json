@@ -14,13 +14,13 @@
     "git": "2.54.0"
   },
   "opencode": {
-    "cli": "1.18.33",
-    "sdk": "^1.18.33",
+    "cli": "1.18.34",
+    "sdk": "^1.18.34",
     "server": "http://localhost:4096",
     "server_auth": "opencode:opencode (Basic)"
   },
   "openchamber": {
-    "cli": "2.0.4"
+    "cli": "2.1.0"
   },
   "wechat": {
     "acp": "0.8.0"
