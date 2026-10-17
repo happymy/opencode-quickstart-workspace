@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  OPENCODE_VERSION: 1.18.35
+  OPENCODE_VERSION: 2.0.26
 
 jobs:
   build:
@@ -60,7 +60,7 @@ jobs:
           |------|------|---------|
           | wechat-bot | ${{ github.ref_name }} | `docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/wechat-bot:${{ github.ref_name }}` |
 
-          `opencode-server` 使用官方镜像 `ghcr.io/anomalyco/opencode:v${{ env.OPENCODE_VERSION }}`，无需构建。Web UI 请本地运行 OpenChamber（`npm i -g @openchamber/web`）。
+          `opencode-server` 使用官方镜像 `ghcr.io/anomalyco/opencode:${{ env.OPENCODE_VERSION }}`，无需构建。Web UI 请本地运行 OpenChamber（`npm i -g @openchamber/web`）。
 
           ### 部署
 
