@@ -9,7 +9,8 @@ OpenCode + wechat-acp + WeChat 机器人集成工作区。
 ```
 work/
 ├── src/
-│   └── utils.js             # 纯函数工具库（测试入口）
+│   ├── utils.js             # 纯函数工具库（测试入口）
+│   └── opencode-compat.js   # @opencode/client v2 → v1-preview 兼容垫片
 ├── wechat-adapter.js        # WeChat 机器人适配器（ACP Agent）
 ├── start-all.bat            # 一键启动所有服务
 ├── stop-all.bat             # 停止所有服务
@@ -34,6 +35,7 @@ work/
 ├── vitest.config.js         # Vitest 测试配置
 ├── tests/
 │   ├── setup.js             # 全局 mock 配置
+│   ├── opencode-compat.test.js  # SDK 兼容垫片测试（映射 + 事件翻译）
 │   ├── unit/utils/
 │   │   ├── helpers.test.js           # 核心纯函数测试（17 函数）
 │   │   ├── edge-cases.test.js        # null/undefined/边界值测试
