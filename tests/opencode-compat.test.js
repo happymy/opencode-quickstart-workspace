@@ -185,6 +185,8 @@ describe('event translation', () => {
     channel.push({ type: 'session.execution.failed', id: 'f1', data: { sessionID: 's1', error: { message: 'boom', type: 'x' } } });
     await tick();
     expect(out[0].type).toBe('session.error');
+    expect(out[0].properties.error.name).toBe('x');
+    expect(out[0].properties.error.data.message).toBe('boom');
     expect(out[0].properties.error.message).toBe('boom');
   });
 
@@ -199,6 +201,7 @@ describe('event translation', () => {
     expect(parts[0].tool).toBe('bash');
     expect(parts[1].tool).toBe('bash');
     expect(parts[2].tool).toBe('bash');
+    expect(parts[1].input).toEqual({ cmd: 'ls' });
     expect(parts[2].state).toEqual({ status: 'completed', output: 'done' });
   });
 

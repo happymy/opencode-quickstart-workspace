@@ -69,6 +69,15 @@ function errorText(error) {
   return error.message || error.type || '';
 }
 
+/**
+ * v2 errors are `{ type, message, status? }`; the adapter renders
+ * `err.name` + `err.data?.message || err.message`, so reshape to that.
+ */
+function toV1Error(error) {
+  const message = errorText(error) || '未知错误';
+  return { name: error?.type || 'Error', message, data: { message } };
+}
+
 /** v2 Form fields → the v1 `question` shape the adapter renders. */
 function formToQuestions(form) {
   const fields = Array.isArray(form?.fields) ? form.fields : [];
@@ -206,7 +215,7 @@ export function createOpencodeClient(options = {}) {
         return { type: 'session.idle', id, properties: { sessionID: d.sessionID } };
       case 'session.execution.failed':
         settleTurn(d.sessionID);
-        return { type: 'session.error', id, properties: { sessionID: d.sessionID, error: d.error } };
+        return { type: 'session.error', id, properties: { sessionID: d.sessionID, error: toV1Error(d.error) } };
 
       case 'session.text.delta':
         textAccum.set(d.sessionID, (textAccum.get(d.sessionID) || '') + (d.delta || ''));
@@ -241,7 +250,8 @@ export function createOpencodeClient(options = {}) {
           id,
           properties: {
             sessionID: d.sessionID,
-            part: { id: d.id, type: 'tool', tool: d.name, state: { status: 'running', input: {} }, time: { start: created } },
+            // the adapter reads `part.input` (top level), keeps `state` too
+            part: { id: d.id, type: 'tool', tool: d.name, input: {}, state: { status: 'running' }, time: { start: created } },
           },
         };
       case 'session.tool.called':
@@ -250,7 +260,13 @@ export function createOpencodeClient(options = {}) {
           id,
           properties: {
             sessionID: d.sessionID,
-            part: { id: d.id, type: 'tool', tool: toolNames.get(d.id) || '', state: { status: 'running', input: d.input } },
+            part: {
+              id: d.id,
+              type: 'tool',
+              tool: toolNames.get(d.id) || '',
+              input: d.input,
+              state: { status: 'running', input: d.input },
+            },
           },
         };
       case 'session.tool.success': {
