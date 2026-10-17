@@ -100,7 +100,7 @@ echo [3/5] Checking opencode CLI...
 where opencode >nul 2>&1
 if errorlevel 1 (
     echo  ! opencode not found, installing v%LOCKED_OPENCODE_CLI%...
-    call npm install -g opencode-windows-x64@%LOCKED_OPENCODE_CLI% 2>&1
+    call npm install -g @opencode/cli@%LOCKED_OPENCODE_CLI% 2>&1
     if errorlevel 1 (
         echo  [FAIL] opencode install failed
     ) else (

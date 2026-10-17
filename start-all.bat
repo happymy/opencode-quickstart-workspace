@@ -92,8 +92,8 @@ if exist "%USERPROFILE%\.wechat-acp\token.json" (
 )
 echo.
 
-echo [next] Starting terminal attach...
-start "opencode-tui" pwsh -NoLogo -Command "$env:OPENCODE_SERVER_PASSWORD='%OPENCODE_PASSWORD%'; opencode attach http://localhost:%OPENCODE_PORT% -c"
+echo [next] Starting terminal TUI on the shared server...
+start "opencode-tui" pwsh -NoLogo -Command "$env:OPENCODE_SERVER_PASSWORD='%OPENCODE_PASSWORD%'; opencode --server http://localhost:%OPENCODE_PORT% -c"
 echo  [OK] Terminal TUI attached.
 echo.
 
