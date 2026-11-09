@@ -69,7 +69,7 @@ work/
 | VCS | Git | 同上 |
 | npm 包 | opencode CLI | 未安装时装锁定版本，已安装版本不匹配则 warn |
 | npm 包 | OpenChamber CLI | 同上（`@openchamber/web`） |
-| npm 包 | opencode SDK | `@opencode/client`，与 CLI 同版本号发布，锁定 2.2.5（OpenChamber 2.5.3 自带 2.2.3） |
+| npm 包 | opencode SDK | `@opencode/client`，与 CLI 同版本号发布，锁定 2.2.6（OpenChamber 2.7.0 自带 2.2.6） |
 | npx 包 | wechat-acp | 始终下载锁定版本（`npx wechat-acp@<版本>`） |
 
 ## 环境安装
